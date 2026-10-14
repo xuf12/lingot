@@ -102,15 +102,19 @@ make
 
 To run on macOS:
 
-```console
-# Start the PulseAudio audio daemon (required for microphone input)
-pulseaudio --start
+PulseAudio is required for microphone capture on macOS. You can enable it as a persistent background service once, allowing you to launch Lingot in a single step anytime:
 
-# Launch lingot
+```console
+# One-time setup: start PulseAudio as a persistent service
+brew services start pulseaudio
+
+# Launch lingot (1 step):
 ./lingot
 ```
 
-For full details, background service setup, microphone permissions, and troubleshooting on macOS, see [BUILD_MACOS.md](BUILD_MACOS.md).
+*(Alternatively, to run without a background service: `pulseaudio --start 2>/dev/null; ./lingot`)*
+
+For full details, microphone privacy permissions, and troubleshooting on macOS, see [BUILD_MACOS.md](BUILD_MACOS.md).
 
 
 Beware that LINGOT ships an experimental shared library, whose interface could

@@ -79,29 +79,33 @@ sudo make install
 
 ## 4. Running LINGOT on macOS
 
-### 1. Start the PulseAudio Daemon
-LINGOT captures input through PulseAudio on macOS. Ensure the PulseAudio service is running:
+LINGOT uses PulseAudio to capture microphone audio on macOS.
+
+### Recommended (1-Step Launch): Enable Background Service
+Run this command once to register PulseAudio as a persistent macOS background service:
 
 ```bash
-# Start as a background service:
 brew services start pulseaudio
+```
 
-# Or start directly in background:
-pulseaudio --start
+Once enabled, PulseAudio runs automatically whenever you log in. You can now launch Lingot anytime in **a single step**:
+
+```bash
+./lingot
+# or if installed globally:
+lingot
+```
+
+---
+
+### Alternative: On-Demand Execution
+If you prefer not to keep a background service running, you can launch PulseAudio and Lingot together in one command:
+
+```bash
+pulseaudio --start 2>/dev/null; ./lingot
 ```
 
 > **Microphone Permissions:** The first time PulseAudio or your terminal accesses the microphone, macOS will prompt you for permission in **System Settings > Privacy & Security > Microphone**. Ensure permission is granted.
-
-### 2. Launch the Application
-If running from the repository:
-```bash
-./lingot
-```
-
-If installed globally:
-```bash
-lingot
-```
 
 ---
 

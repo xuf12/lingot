@@ -31,7 +31,7 @@ Main features
 Requirements
 ------------
 
-* A modest computer running _GNU/Linux_. 
+* A modest computer running _GNU/Linux_ or _macOS_. 
 * A sound card with line-in or microphone input. 
 * [Jack](http://www.jackaudio.org/), 
   [ALSA](https://www.alsa-project.org/main/index.php/Main_Page), 
@@ -81,6 +81,37 @@ sudo apt-get install \
     libtool \
     pkg-config
 ```
+
+Below a summary of the packages and steps needed to build on _macOS_ (using [Homebrew](https://brew.sh)):
+
+```console
+brew install autoconf automake libtool pkg-config intltool gettext \
+    gtk+3 json-c fftw pulseaudio
+```
+
+Configure and build (on macOS, ALSA and OSS are disabled; PulseAudio or JACK is used for audio):
+
+```console
+export PATH="/opt/homebrew/opt/gettext/bin:$PATH"
+export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:/opt/homebrew/opt/gettext/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+./bootstrap
+./configure --without-oss --without-alsa --with-pulseaudio
+make
+```
+
+To run on macOS:
+
+```console
+# Start the PulseAudio audio daemon (required for microphone input)
+pulseaudio --start
+
+# Launch lingot
+./lingot
+```
+
+For full details, background service setup, microphone permissions, and troubleshooting on macOS, see [BUILD_MACOS.md](BUILD_MACOS.md).
+
 
 Beware that LINGOT ships an experimental shared library, whose interface could
 be subject to change. If you have trouble finding the library when launching the

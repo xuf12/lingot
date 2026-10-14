@@ -126,6 +126,7 @@ dist_man_MANS = lingot.1
 
 dist_doc_DATA = \
   AUTHORS \
+  BUILD_MACOS.md \
   COPYING \
   ChangeLog \
   NEWS \

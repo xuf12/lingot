@@ -31,6 +31,31 @@ on a connected device or emulator with:
 The project can also be opened directly in Android Studio (open the
 `android/` folder).
 
+## Releasing
+
+The Android app is versioned independently of the desktop application, with
+`android-vX.Y.Z` tags. For each release:
+
+1. Bump `versionName` and increment `versionCode` in `app/build.gradle.kts`
+   (devices refuse an update whose `versionCode` is not higher).
+2. Build the signed APK with `./gradlew assembleRelease`; it is written to
+   `app/build/outputs/apk/release/app-release.apk`.
+3. Publish it as an asset of a GitHub release (APKs are not committed).
+
+Release signing reads these Gradle properties, normally kept in
+`~/.gradle/gradle.properties` outside the repository:
+
+```properties
+LINGOT_RELEASE_STORE_FILE=/path/to/lingot-release.jks
+LINGOT_RELEASE_STORE_PASSWORD=...
+LINGOT_RELEASE_KEY_ALIAS=lingot
+LINGOT_RELEASE_KEY_PASSWORD=...
+```
+
+Without them the release APK is left unsigned. Every update must be signed
+with the same key, otherwise users have to uninstall the app first, so keep
+a backup of the keystore.
+
 ## Usage
 
 On first launch the app asks for microphone permission. Pick the instrument

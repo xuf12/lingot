@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lingot</string>
+    <string name="range_guitar">Guitar (E2–E4)</string>
+    <string name="range_bass">Bass (E1–G2)</string>
+    <string name="range_violin">Violin / Ukulele (G3–E5)</string>
+    <string name="range_wide">Wide (C2–C6)</string>
+    <string name="permission_denied">Lingot needs microphone access to tune. Grant it in the app settings.</string>
+    <string name="audio_unavailable">Audio input unavailable, retrying…</string>
+</resources>

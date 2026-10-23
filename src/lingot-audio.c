@@ -260,6 +260,7 @@ void lingot_audio_stop(lingot_audio_handler_t* audio) {
             if (system->func_stop) {
                 system->func_stop(audio);
             } else {
+#ifndef __ANDROID__
                 tout_abs.tv_usec += 500000;
                 if (tout_abs.tv_usec >= 1000000) {
                     tout_abs.tv_usec -= 1000000;
@@ -280,6 +281,13 @@ void lingot_audio_stop(lingot_audio_handler_t* audio) {
                 } else {
                     pthread_join(audio->thread_input_read, &thread_result);
                 }
+#else
+                // bionic has no pthread_cancel(), and the Android backend reads
+                // with a timeout, so the thread always finishes by itself.
+                (void) result;
+                (void) tout_tspec;
+                pthread_join(audio->thread_input_read, &thread_result);
+#endif
                 pthread_attr_destroy(&audio->thread_input_read_attr);
                 pthread_mutex_destroy(&audio->thread_input_read_mutex);
                 pthread_cond_destroy(&audio->thread_input_read_cond);

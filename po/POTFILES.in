@@ -1,4 +1,5 @@
 # List of source files containing translatable strings.
+src/lingot-audio-aaudio.c
 src/lingot-audio-alsa.c
 src/lingot-audio-jack.c
 src/lingot-audio-oss.c

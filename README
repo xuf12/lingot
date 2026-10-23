@@ -116,6 +116,15 @@ brew services start pulseaudio
 
 For full details, microphone privacy permissions, and troubleshooting on macOS, see [BUILD_MACOS.md](BUILD_MACOS.md).
 
+An _Android_ port (Android 9 or later), sharing the same tuner core and
+capturing audio through AAudio, lives in the `android/` folder. See
+[android/README.md](android/README.md) for build instructions:
+
+```console
+cd android
+./gradlew assembleDebug
+```
+
 
 Beware that LINGOT ships an experimental shared library, whose interface could
 be subject to change. If you have trouble finding the library when launching the

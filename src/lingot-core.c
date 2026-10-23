@@ -126,7 +126,7 @@ void lingot_core_new(lingot_core_t* core_, lingot_config_t* conf) {
 
         if (requested_sample_rate != core->audio.real_sample_rate) {
             core->conf.sample_rate = (int) core->audio.real_sample_rate;
-            lingot_config_update_internal_params(conf);
+            lingot_config_update_internal_params(&core->conf);
             //			sprintf(buff,
             //					_("The requested sample rate is not available, the real sample rate has been set to %d Hz"),
             //					core->audio.real_sample_rate);
@@ -137,7 +137,7 @@ void lingot_core_new(lingot_core_t* core_, lingot_config_t* conf) {
             core->conf.temporal_window = ((double) core->conf.fft_size
                                           * core->conf.oversampling) / core->conf.sample_rate;
             core->conf.temporal_buffer_size = core->conf.fft_size;
-            lingot_config_update_internal_params(conf);
+            lingot_config_update_internal_params(&core->conf);
             snprintf(buff, sizeof(buff),
                      _("The temporal buffer is smaller than FFT size. It has been increased to %0.3f seconds"),
                      core->conf.temporal_window);
@@ -669,6 +669,7 @@ void lingot_core_thread_stop(lingot_core_t* core_) {
 
         if (!core->running) {
 
+#ifndef __ANDROID__
             tout_abs.tv_usec += 300000;
             if (tout_abs.tv_usec >= 1000000) {
                 tout_abs.tv_usec -= 1000000;
@@ -690,6 +691,14 @@ void lingot_core_thread_stop(lingot_core_t* core_) {
             } else {
                 pthread_join(core->thread_computation, &thread_result);
             }
+#else
+            // the computation loop checks the running flag at the calculation
+            // rate, so it always finishes by itself. Waiting on the condition
+            // above could miss its final broadcast and stall the UI thread.
+            (void) result;
+            (void) tout_tspec;
+            pthread_join(core->thread_computation, &thread_result);
+#endif
             pthread_attr_destroy(&core->thread_computation_attr);
             pthread_mutex_destroy(&core->thread_computation_mutex);
             pthread_cond_destroy(&core->thread_computation_cond);

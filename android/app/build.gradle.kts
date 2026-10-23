@@ -20,8 +20,8 @@ android {
         // The Android app is versioned independently of the desktop release
         // (tags android-vX.Y.Z). versionCode must increase on every release,
         // otherwise devices refuse to install the update.
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
 
         externalNativeBuild {
             cmake {

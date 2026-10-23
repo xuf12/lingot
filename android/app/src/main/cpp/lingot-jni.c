@@ -29,7 +29,9 @@
 
 #include <jni.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "lingot-audio.h"
 #include "lingot-audio-aaudio.h"
@@ -57,6 +59,53 @@ static lingot_filter_t freq_filter;
 static LINGOT_FLT gauge_pos = 0.0;
 static LINGOT_FLT frequency = 0.0;
 static int closest_note_index = 0;
+
+#ifndef NDEBUG
+// Debug builds only: synthetic audio input used to check the UI without an
+// instrument (e.g. on an emulator, whose microphone is silent). Enabled with
+//   adb shell setprop debug.lingot.tone <frequency in Hz>
+// and disabled by setting the property to 0.
+
+#include <sys/system_properties.h>
+
+static double synthetic_frequency = 0.0;
+static double synthetic_phase = 0.0;
+
+static double lingot_jni_synthetic_frequency_property(void) {
+    char value[PROP_VALUE_MAX] = "";
+    __system_property_get("debug.lingot.tone", value);
+    return atof(value);
+}
+
+static void lingot_jni_synthetic_new(lingot_audio_handler_t* audio, const char* device, int sample_rate) {
+    audio->real_sample_rate = (unsigned int) sample_rate;
+    audio->read_buffer_size_samples = 2048;
+    audio->bytes_per_sample = sizeof(float);
+    audio->audio_handler_extra = NULL;
+}
+
+static void lingot_jni_synthetic_destroy(lingot_audio_handler_t* audio) {
+}
+
+static int lingot_jni_synthetic_read(lingot_audio_handler_t* audio) {
+    // paced as a real device delivering the samples
+    const double period = (double) audio->read_buffer_size_samples / audio->real_sample_rate;
+    const struct timespec delay = { 0, (long) (period * 1e9) };
+    nanosleep(&delay, NULL);
+
+    // a string-like tone: fundamental plus decaying harmonics, and some noise
+    const double phase_step = 2.0 * M_PI * synthetic_frequency / audio->real_sample_rate;
+    unsigned int i;
+    for (i = 0; i < audio->read_buffer_size_samples; i++) {
+        const double p = synthetic_phase;
+        const double noise = (double) rand() / RAND_MAX - 0.5;
+        audio->flt_read_buffer[i] = FLT_SAMPLE_SCALE
+                * (0.3 * sin(p) + 0.15 * sin(2 * p) + 0.08 * sin(3 * p) + 0.004 * noise);
+        synthetic_phase = fmod(synthetic_phase + phase_step, 2.0 * M_PI);
+    }
+    return (int) audio->read_buffer_size_samples;
+}
+#endif
 
 static void lingot_jni_destroy(void) {
     if (created) {
@@ -96,6 +145,11 @@ Java_org_nongnu_lingot_LingotNative_start(JNIEnv* env, jclass clazz,
 
     if (!audio_registered) {
         lingot_audio_aaudio_register();
+#ifndef NDEBUG
+        lingot_audio_system_register("Synthetic",
+                                     lingot_jni_synthetic_new, lingot_jni_synthetic_destroy,
+                                     NULL, NULL, NULL, lingot_jni_synthetic_read, NULL);
+#endif
         audio_registered = 1;
     }
 
@@ -104,6 +158,12 @@ Java_org_nongnu_lingot_LingotNative_start(JNIEnv* env, jclass clazz,
     lingot_config_new(&conf);
     lingot_config_restore_default_values(&conf);
     conf.audio_system_index = lingot_audio_system_find_by_name("AAudio");
+#ifndef NDEBUG
+    synthetic_frequency = lingot_jni_synthetic_frequency_property();
+    if (synthetic_frequency > 0.0) {
+        conf.audio_system_index = lingot_audio_system_find_by_name("Synthetic");
+    }
+#endif
     conf.sample_rate = SAMPLE_RATE;
     if (min_frequency > 0.0 && max_frequency > min_frequency) {
         conf.min_frequency = min_frequency;
@@ -133,6 +193,8 @@ Java_org_nongnu_lingot_LingotNative_isRunning(JNIEnv* env, jclass clazz) {
 // result[0] = filtered frequency in Hz (0 if no pitch detected)
 // result[1] = gauge position in cents
 // result[2] = octave of the closest note
+// result[3] = unfiltered frequency computed by the core, in Hz
+// result[4] = frequency of the closest note, in Hz
 // Returns the closest note name, or null if no pitch is detected.
 JNIEXPORT jstring JNICALL
 Java_org_nongnu_lingot_LingotNative_poll(JNIEnv* env, jclass clazz, jdoubleArray result) {
@@ -161,9 +223,11 @@ Java_org_nongnu_lingot_LingotNative_poll(JNIEnv* env, jclass clazz, jdoubleArray
     const jdouble values[] = {
         frequency,
         gauge_pos,
-        lingot_config_scale_get_octave(&conf.scale, closest_note_index) + 4
+        lingot_config_scale_get_octave(&conf.scale, closest_note_index) + 4,
+        lingot_core_thread_is_running(&core) ? freq : 0.0,
+        lingot_config_scale_get_frequency(&conf.scale, closest_note_index)
     };
-    (*env)->SetDoubleArrayRegion(env, result, 0, 3, values);
+    (*env)->SetDoubleArrayRegion(env, result, 0, 5, values);
 
     if (frequency == 0.0) {
         return NULL;
@@ -177,6 +241,12 @@ Java_org_nongnu_lingot_LingotNative_poll(JNIEnv* env, jclass clazz, jdoubleArray
 JNIEXPORT jdouble JNICALL
 Java_org_nongnu_lingot_LingotNative_gaugeRange(JNIEnv* env, jclass clazz) {
     return created ? conf.gauge_range : 100.0;
+}
+
+// minimum SNR required to consider a peak, in dB (noise threshold in the spectrum)
+JNIEXPORT jdouble JNICALL
+Java_org_nongnu_lingot_LingotNative_minOverallSNR(JNIEnv* env, jclass clazz) {
+    return created ? conf.min_overall_SNR : 0.0;
 }
 
 // Copies the latest spectrum (in dB) into the given array, returns the number of bins.

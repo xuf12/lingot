@@ -32,13 +32,18 @@ final class LingotNative {
     static native boolean isRunning();
 
     /**
-     * Advances the gauge one step. Fills result with {frequency (Hz), gauge position
-     * (cents), octave}, and returns the closest note name, or null if no pitch is detected.
+     * Advances the gauge one step. Fills result (at least 5 elements) with {filtered
+     * frequency (Hz), gauge position (cents), octave, unfiltered frequency (Hz), closest
+     * note frequency (Hz)}, and returns the closest note name, or null if no pitch is
+     * detected.
      */
     static native String poll(double[] result);
 
     /** Range of the gauge in cents. */
     static native double gaugeRange();
+
+    /** Minimum SNR required to consider a peak, in dB. */
+    static native double minOverallSNR();
 
     /** Copies the latest spectrum (dB) into out, returns the number of bins. */
     static native int spectrum(float[] out);

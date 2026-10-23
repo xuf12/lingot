@@ -6,5 +6,12 @@
     <string name="range_violin">Violin / Ukulele (G3–E5)</string>
     <string name="range_wide">Wide (C2–C6)</string>
     <string name="permission_denied">Lingot needs microphone access to tune. Grant it in the app settings.</string>
+    <string name="frame_deviation">Deviation</string>
+    <string name="frame_tone">Tone</string>
+    <string name="frame_spectrum">Spectrum</string>
+    <string name="menu_view">View</string>
+    <string name="view_gauge">Gauge</string>
+    <string name="view_strobe_disc">Strobe disc</string>
+    <string name="view_spectrum">Spectrum</string>
     <string name="audio_unavailable">Audio input unavailable, retrying…</string>
 </resources>
